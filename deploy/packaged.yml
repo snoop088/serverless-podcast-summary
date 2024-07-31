@@ -44,7 +44,7 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Layers:
-      - arn:aws:lambda:us-east-1:780954185713:layer:python-sound-manipulation:3
+      - Fn::Sub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:3
       Policies:
       - AWSLambdaBasicExecutionRole
       - AmazonS3FullAccess
