@@ -1,0 +1,57 @@
+{
+  "Role": "arn:aws:iam::780954185713:role/sound-manip-MediaConvertRole-i0VZEBCKxZyT",
+  "Settings": {
+    "Inputs": [
+      {
+        "FileInput": "s3://video-source-container/vid_1.mp4",
+        "AudioSelectors": {
+          "Audio Selector 1": {
+            "DefaultSelection": "DEFAULT"
+          }
+        }
+      }
+    ],
+    "OutputGroups": [
+      {
+        "Name": "File Group",
+        "OutputGroupSettings": {
+          "Type": "FILE_GROUP_SETTINGS",
+          "FileGroupSettings": {
+            "Destination": "s3://sound-output-container/vid.mov"
+          }
+        },
+        "Outputs": [
+          {
+            "ContainerSettings": {
+              "Container": "MOV"
+            },
+            "VideoDescription": {
+              "CodecSettings": {
+                "Codec": "H_264",
+                "H264Settings": {
+                  "RateControlMode": "CBR",
+                  "Bitrate": 5000000,
+                  "FramerateControl": "INITIALIZE_FROM_SOURCE",
+                  "GopSize": 90,
+                  "GopSizeUnits": "FRAMES"
+                }
+              }
+            },
+            "AudioDescriptions": [
+              {
+                "CodecSettings": {
+                  "Codec": "AAC",
+                  "AacSettings": {
+                    "Bitrate": 96000,
+                    "SampleRate": 48000,
+                    "CodingMode": "CODING_MODE_2_0"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

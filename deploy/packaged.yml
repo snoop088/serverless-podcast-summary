@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS App for Summarising YouTube Podcasts
+Resources:
+  VideoSourceContainer:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: video-source-container
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    Metadata:
+      SamResourceId: VideoSourceContainer
+  SoundOutputContainer:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: sound-transcribed-output
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    Metadata:
+      SamResourceId: SoundOutputContainer
+  TranscribedTextsContainer:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: transcribed-texts-container
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    Metadata:
+      SamResourceId: TranscribedTextsContainer
+  SoundStrip:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.lambda_handler
+      Runtime: python3.11
+      CodeUri: s3://nick-gen-purpose/67a7dd2269b04eefd8af2f72696e8e94
+      MemorySize: 128
+      Timeout: 30
+      Layers:
+      - arn:aws:lambda:us-east-1:780954185713:layer:python-sound-manipulation:3
+      Policies:
+      - AWSLambdaBasicExecutionRole
+      - AmazonS3FullAccess
+    Metadata:
+      SamResourceId: SoundStrip
+  SoundTranscriber:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.lambda_handler
+      Runtime: python3.11
+      CodeUri: s3://nick-gen-purpose/319ed59ad88fd9e325945cacb2a08c8a
+      MemorySize: 128
+      Timeout: 30
+      Role:
+        Fn::GetAtt:
+        - SoundTranscriberRole
+        - Arn
+      Events:
+        S3PutObject:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: VideoSourceContainer
+            Events: s3:ObjectCreated:Put
+    Metadata:
+      SamResourceId: SoundTranscriber
+  TranscribeSummariser:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.lambda_handler
+      Runtime: python3.11
+      CodeUri: s3://nick-gen-purpose/cd6ae8c590b0679df48967597bce4459
+      MemorySize: 128
+      Timeout: 30
+      Role:
+        Fn::GetAtt:
+        - TranscribeSummariserRole
+        - Arn
+      Events:
+        S3PutObject:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: SoundOutputContainer
+            Events: s3:ObjectCreated:Put
+            Filter:
+              S3Key:
+                Rules:
+                - Name: suffix
+                  Value: .json
+    Metadata:
+      SamResourceId: TranscribeSummariser
+  SoundTranscriberRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - transcribe.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+      - PolicyName: TranscribeServicePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - transcribe:StartTranscriptionJob
+            - transcribe:GetTranscriptionJob
+            - transcribe:ListTranscriptionJobs
+            - transcribe:DeleteTranscriptionJob
+            Resource: '*'
+    Metadata:
+      SamResourceId: SoundTranscriberRole
+  TranscribeSummariserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+      - PolicyName: BedrockInvokeModelPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: BedrockService
+            Effect: Allow
+            Action:
+            - bedrock:InvokeModel
+            Resource: '*'
+    Metadata:
+      SamResourceId: TranscribeSummariserRole
