@@ -40,7 +40,7 @@ Resources:
     Properties:
       Handler: main.lambda_handler
       Runtime: python3.11
-      CodeUri: s3://nick-gen-purpose/67a7dd2269b04eefd8af2f72696e8e94
+      CodeUri: s3://nick-gen-purpose/5d929245a2ac414c3e559a2e9633e0e2
       MemorySize: 128
       Timeout: 30
       Layers:
@@ -55,7 +55,7 @@ Resources:
     Properties:
       Handler: main.lambda_handler
       Runtime: python3.11
-      CodeUri: s3://nick-gen-purpose/319ed59ad88fd9e325945cacb2a08c8a
+      CodeUri: s3://nick-gen-purpose/f77e391b0e25c30d287c0d8a75630810
       MemorySize: 128
       Timeout: 30
       Role:
@@ -68,7 +68,9 @@ Resources:
           Properties:
             Bucket:
               Ref: VideoSourceContainer
-            Events: s3:ObjectCreated:Put
+            Events:
+            - s3:ObjectCreated:Put
+            - s3:ObjectCreated:CompleteMultipartUpload
     Metadata:
       SamResourceId: SoundTranscriber
   TranscribeSummariser:

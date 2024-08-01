@@ -64,8 +64,9 @@ Resources:
           Type: S3
           Properties:
             Bucket: !Ref VideoSourceContainer
-            Events: s3:ObjectCreated:Put
-
+            Events:
+              - s3:ObjectCreated:Put
+              - s3:ObjectCreated:CompleteMultipartUpload
   TranscribeSummariser:
     Type: AWS::Serverless::Function
     Properties:

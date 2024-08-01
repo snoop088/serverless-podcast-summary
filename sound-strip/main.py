@@ -1,4 +1,6 @@
 import json
+import re
+import os
 import boto3
 from pytubefix import YouTube
 
@@ -15,9 +17,15 @@ def lambda_handler(event, context):
 
     # Download the audio to the local temporary directory
     file = audio.download(output_path='/tmp', mp3=True)
+
+    sanitized_file = re.sub(r'\s+', '-', file.strip())
+
+    sanitized_file = re.sub(r'[^a-zA-Z0-9-_./]', '', sanitized_file)
+    sanitized_file = re.sub(r'[-_]+', '-', sanitized_file)
+    os.rename(file, sanitized_file)
     # convert it with AudioSegment
-    s3_client.upload_file(file, bucket_name, f"{file.split('/')[-1]}")
+    s3_client.upload_file(sanitized_file, bucket_name, f"{sanitized_file.split('/')[-1]}")
     return {
         'statusCode': 200,
-        'body': f'Hello from Lambda. Your file is {file}'
+        'body': f'Hello from Lambda. Your file is {sanitized_file}'
     }
