@@ -40,16 +40,44 @@ Resources:
     Properties:
       Handler: main.lambda_handler
       Runtime: python3.11
-      CodeUri: s3://nick-gen-purpose/5d929245a2ac414c3e559a2e9633e0e2
+      CodeUri: s3://nick-gen-purpose/1374f9eebe257400507165388f279be2
       MemorySize: 128
       Timeout: 30
       Layers:
-      - Fn::Sub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:3
+      - Fn::Sub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:5
       Policies:
       - AWSLambdaBasicExecutionRole
       - AmazonS3FullAccess
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /soundstrip
+            Method: post
+            RestApiId:
+              Ref: SoundStripApi
     Metadata:
       SamResourceId: SoundStrip
+  SoundStripApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: SoundStripApi
+      StageName: Prod
+      Auth:
+        DefaultAuthorizer: IAM
+        Authorizers:
+          IAM:
+            Identity:
+              Headers:
+              - Authorization
+            FunctionArn:
+              Fn::GetAtt:
+              - SoundStrip
+              - Arn
+            FunctionPayloadType: REQUEST
+            IdentitySource: method.request.header.Authorization
+    Metadata:
+      SamResourceId: SoundStripApi
   SoundTranscriber:
     Type: AWS::Serverless::Function
     Properties:
@@ -99,6 +127,18 @@ Resources:
                   Value: .json
     Metadata:
       SamResourceId: TranscribeSummariser
+  SoundStripInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - SoundStrip
+        - Arn
+      Principal: amplify.amazonaws.com
+      SourceArn: arn:aws:lambda:us-east-1:780954185713:function:amplify-d2jx79cpuvq9e1-main-sayhellolambdaEFA46D92-3DN0Q34QF1K7
+    Metadata:
+      SamResourceId: SoundStripInvokePermission
   SoundTranscriberRole:
     Type: AWS::IAM::Role
     Properties:
@@ -156,3 +196,8 @@ Resources:
             Resource: '*'
     Metadata:
       SamResourceId: TranscribeSummariserRole
+Outputs:
+  SoundStripApiUrl:
+    Description: URL for the SoundStrip API
+    Value:
+      Fn::Sub: https://${SoundStripApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/soundstrip

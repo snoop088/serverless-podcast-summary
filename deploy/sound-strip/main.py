@@ -10,7 +10,7 @@ bucket_name = "video-source-container"
 
 def lambda_handler(event, context):
     # Define the YouTube URL
-    yt = YouTube(event['body']['url'])
+    yt = YouTube(event['body']['url'], use_oauth=True, allow_oauth_cache=True)
 
     # Filter to fetch only the audio stream
     audio = yt.streams.filter(only_audio=True).first()

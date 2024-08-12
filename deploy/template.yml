@@ -45,10 +45,33 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Layers:
-        - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:3
+        - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:5
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonS3FullAccess
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /soundstrip
+            Method: post
+            RestApiId: !Ref SoundStripApi
+
+  SoundStripApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: SoundStripApi
+      StageName: Prod
+      Auth:
+        DefaultAuthorizer: IAM
+        Authorizers:
+          IAM:
+            Identity:
+              Headers:
+                - Authorization
+            FunctionArn: !GetAtt SoundStrip.Arn
+            FunctionPayloadType: REQUEST
+            IdentitySource: method.request.header.Authorization
 
   SoundTranscriber:
     Type: AWS::Serverless::Function
@@ -87,20 +110,14 @@ Resources:
                 Rules:
                   - Name: suffix
                     Value: .json
-            # Filter:
-            #   S3Key:
-            #     Rules:
-            #       - Name: prefix
-            #         Value: jobs/
-  # ReactAmplifyFrontEnd:
-  #   Type: AWS::CloudFormation::Stack
-  #   properties:
-  #     TemplateURL: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  #     Parameters:
-  #       AppName: "podcast-summariser"
-  #       Env: "prod"
-  #       UnauthRoleArn: !GetAtt ReactAmplifyFrontEndRole.Arn
-  #       DependentServices: "[]"
+
+  SoundStripInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt SoundStrip.Arn
+      Principal: amplify.amazonaws.com
+      SourceArn: arn:aws:lambda:us-east-1:780954185713:function:amplify-d2jx79cpuvq9e1-main-sayhellolambdaEFA46D92-3DN0Q34QF1K7
 
   SoundTranscriberRole:
     Type: AWS::IAM::Role
@@ -160,3 +177,7 @@ Resources:
               #   Effect: Allow
               #   Action:
               #     - transcribe:GetTranscriptionJob
+Outputs:
+  SoundStripApiUrl:
+    Description: "URL for the SoundStrip API"
+    Value: !Sub "https://${SoundStripApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/soundstrip"
