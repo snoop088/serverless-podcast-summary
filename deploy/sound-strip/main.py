@@ -6,6 +6,9 @@ from pytubefix import YouTube
 
 s3_client = boto3.client('s3', region_name='us-east-1')
 bucket_name = "video-source-container"
+cached_token_key = 'cached_token/tokens.json'
+token_cache_dir = '/tmp/pytubefix_cache'
+token_cache_path = os.path.join(token_cache_dir, 'tokens.json')
 
 
 def dl_with_dlp(url):
@@ -27,9 +30,26 @@ def dl_with_dlp(url):
     return file
 
 
+def prepare_token():
+    if not os.path.exists(token_cache_dir):
+        os.makedirs(token_cache_dir)
+    if not os.path.exists(token_cache_path):
+        try:
+            s3_client.download_file(
+                bucket_name, cached_token_key, token_cache_path)
+            print(f"Downloaded tokens.json from S3 to {token_cache_path}")
+        except Exception as e:
+            print(f"Error downloading tokens.json from S3: {e}")
+            # Handle the error as needed, possibly re-throw or exit
+    else:
+        print(f"Token file already exists in {token_cache_path}")
+
+
 def lambda_handler(event, context):
     # Define the YouTube URL
-    yt = YouTube(event['body']['url'], use_oauth=True, allow_oauth_cache=True)
+    prepare_token()
+    yt = YouTube(event['body']['url'], use_oauth=True,
+                 allow_oauth_cache=True, token_file=token_cache_path)
 
     audio = yt.streams.filter(only_audio=True).first()
 

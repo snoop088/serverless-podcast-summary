@@ -56,29 +56,29 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonS3FullAccess
-      Events:
-        ApiEvent:
-          Type: Api
-          Properties:
-            Path: /soundstrip
-            Method: post
-            RestApiId: !Ref SoundStripApi
+  #     Events:
+  #       ApiEvent:
+  #         Type: Api
+  #         Properties:
+  #           Path: /soundstrip
+  #           Method: post
+  #           RestApiId: !Ref SoundStripApi
 
-  SoundStripApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: SoundStripApi
-      StageName: Prod
-      Auth:
-        DefaultAuthorizer: IAM
-        Authorizers:
-          IAM:
-            Identity:
-              Headers:
-                - Authorization
-            FunctionArn: !GetAtt SoundStrip.Arn
-            FunctionPayloadType: REQUEST
-            IdentitySource: method.request.header.Authorization
+  # SoundStripApi:
+  #   Type: AWS::Serverless::Api
+  #   Properties:
+  #     Name: SoundStripApi
+  #     StageName: Prod
+  #     Auth:
+  #       DefaultAuthorizer: IAM
+  #       Authorizers:
+  #         IAM:
+  #           Identity:
+  #             Headers:
+  #               - Authorization
+  #           FunctionArn: !GetAtt SoundStrip.Arn
+  #           FunctionPayloadType: REQUEST
+  #           IdentitySource: method.request.header.Authorization
 
   SoundTranscriber:
     Type: AWS::Serverless::Function
@@ -190,7 +190,7 @@ Resources:
               - Effect: Allow
                 Action: appsync:GraphQL
                 Resource: !Sub "arn:aws:appsync:${AWS::Region}:${AWS::AccountId}:apis/${AppsyncApiId}/*"
-Outputs:
-  SoundStripApiUrl:
-    Description: "URL for the SoundStrip API"
-    Value: !Sub "https://${SoundStripApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/soundstrip"
+# Outputs:
+#   SoundStripApiUrl:
+#     Description: "URL for the SoundStrip API"
+#     Value: !Sub "https://${SoundStripApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/soundstrip"

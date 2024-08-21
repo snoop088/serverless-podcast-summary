@@ -23,8 +23,7 @@ else
     echo "Environment file $ENV_FILE not found!"
     exit 1
 fi
-
-export $(grep -v '^#' .env | xargs)
+echo "func name $AMPLIFY_FUNCTION_NAME"
 rm -rf deploy
 mkdir deploy
 cp -r template.yml sound-strip transcribe-summariser sound-transcriber ./deploy

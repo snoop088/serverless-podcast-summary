@@ -47,7 +47,7 @@ Resources:
     Properties:
       Handler: main.lambda_handler
       Runtime: python3.11
-      CodeUri: s3://nick-gen-purpose/63e591b4fe03d940f9eb47d2eacd51f8
+      CodeUri: s3://nick-gen-purpose/1cee0650ac321e22d25fab3aa44c34a0
       MemorySize: 128
       Timeout: 30
       Layers:
@@ -55,36 +55,8 @@ Resources:
       Policies:
       - AWSLambdaBasicExecutionRole
       - AmazonS3FullAccess
-      Events:
-        ApiEvent:
-          Type: Api
-          Properties:
-            Path: /soundstrip
-            Method: post
-            RestApiId:
-              Ref: SoundStripApi
     Metadata:
       SamResourceId: SoundStrip
-  SoundStripApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: SoundStripApi
-      StageName: Prod
-      Auth:
-        DefaultAuthorizer: IAM
-        Authorizers:
-          IAM:
-            Identity:
-              Headers:
-              - Authorization
-            FunctionArn:
-              Fn::GetAtt:
-              - SoundStrip
-              - Arn
-            FunctionPayloadType: REQUEST
-            IdentitySource: method.request.header.Authorization
-    Metadata:
-      SamResourceId: SoundStripApi
   SoundTranscriber:
     Type: AWS::Serverless::Function
     Properties:
@@ -197,20 +169,6 @@ Resources:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       - arn:aws:iam::aws:policy/AmazonS3FullAccess
       Policies:
-      - PolicyName: DynamoDBCrudPolicy
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
-            - dynamodb:Query
-            - dynamodb:Scan
-            Resource:
-              Fn::Sub: arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/News-vcydekvyjzhqpbz6wzbzrxyndu-NONE
       - PolicyName: BedrockInvokeModelPolicy
         PolicyDocument:
           Version: '2012-10-17'
@@ -230,8 +188,3 @@ Resources:
               Fn::Sub: arn:aws:appsync:${AWS::Region}:${AWS::AccountId}:apis/${AppsyncApiId}/*
     Metadata:
       SamResourceId: TranscribeSummariserRole
-Outputs:
-  SoundStripApiUrl:
-    Description: URL for the SoundStrip API
-    Value:
-      Fn::Sub: https://${SoundStripApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/soundstrip
