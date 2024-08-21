@@ -5,6 +5,13 @@ Description: AWS App for Summarising YouTube Podcasts
 #   MediaConvertRoleArn:
 #     Type: String
 #     Description: The ARN for the role previously to pass to MediaConvert so it can access to resources in your account
+Parameters:
+  AppsyncApiId:
+    Type: String
+  AmplifyFunctionName:
+    Type: String
+  AppsyncApiUrl:
+    Type: String
 Resources:
   VideoSourceContainer:
     Type: AWS::S3::Bucket
@@ -45,7 +52,7 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Layers:
-        - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:5
+        - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:python-sound-manipulation:7
       Policies:
         - AWSLambdaBasicExecutionRole
         - AmazonS3FullAccess
@@ -99,6 +106,9 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Role: !GetAtt TranscribeSummariserRole.Arn
+      Environment:
+        Variables:
+          APPSYNC_API_URL: !Ref AppsyncApiUrl
       Events:
         S3PutObject:
           Type: S3
@@ -117,7 +127,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt SoundStrip.Arn
       Principal: amplify.amazonaws.com
-      SourceArn: arn:aws:lambda:us-east-1:780954185713:function:amplify-d2jx79cpuvq9e1-main-sayhellolambdaEFA46D92-3DN0Q34QF1K7
+      SourceArn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AmplifyFunctionName}
 
   SoundTranscriberRole:
     Type: AWS::IAM::Role
@@ -164,6 +174,19 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
       Policies:
+        - PolicyName: DynamoDBCrudPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/News-vcydekvyjzhqpbz6wzbzrxyndu-NONE"
         - PolicyName: BedrockInvokeModelPolicy
           PolicyDocument:
             Version: 2012-10-17
@@ -177,6 +200,13 @@ Resources:
               #   Effect: Allow
               #   Action:
               #     - transcribe:GetTranscriptionJob
+        - PolicyName: AccessAmplifyApi
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: appsync:GraphQL
+                Resource: !Sub "arn:aws:appsync:${AWS::Region}:${AWS::AccountId}:apis/${AppsyncApiId}/*"
 Outputs:
   SoundStripApiUrl:
     Description: "URL for the SoundStrip API"
