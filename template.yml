@@ -174,19 +174,6 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
       Policies:
-        - PolicyName: DynamoDBCrudPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:PutItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Query
-                  - dynamodb:Scan
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/News-vcydekvyjzhqpbz6wzbzrxyndu-NONE"
         - PolicyName: BedrockInvokeModelPolicy
           PolicyDocument:
             Version: 2012-10-17
@@ -196,10 +183,6 @@ Resources:
                 Action:
                   - bedrock:InvokeModel
                 Resource: "*"
-              # - Sid: TranscribeService
-              #   Effect: Allow
-              #   Action:
-              #     - transcribe:GetTranscriptionJob
         - PolicyName: AccessAmplifyApi
           PolicyDocument:
             Version: "2012-10-17"
